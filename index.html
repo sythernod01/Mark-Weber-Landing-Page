@@ -788,7 +788,9 @@
         <span class="eyebrow">For Sellers</span>
         <h3>Get a Free Home Valuation</h3>
         <p class="desc">A real, local pricing estimate — not an automated guess. Mark will follow up personally with comps for your specific block.</p>
-        <form id="valuation-form" novalidate>
+        <form id="valuation-form" action="https://api.web3forms.com/submit" method="POST" novalidate>
+  
+          <input type="hidden" name="access_key" value="693d7686-3697-4b10-8c55-ca245a593620">
           <div class="field">
             <label for="v-address">Property address</label>
             <input id="v-address" name="address" type="text" placeholder="Street, City/Town, ZIP" required>
@@ -827,7 +829,8 @@
         <span class="eyebrow">For Buyers</span>
         <h3>Start Your Home Search</h3>
         <p class="desc">Tell Mark what you're looking for and where — including off-market leads you won't find on the major sites.</p>
-        <form id="search-form" novalidate>
+        <form id="search-form" action="https://api.web3forms.com/submit" method="POST" novalidate>
+          <input type="hidden" name="access_key" value="693d7686-3697-4b10-8c55-ca245a593620">
           <div class="field-row">
             <div class="field">
               <label for="b-name">Full name</label>
@@ -871,10 +874,10 @@
         </form>
         <div class="form-success" id="search-success">Thanks — that's in. Mark will follow up with listings that match.</div>
       </div>
-
     </div>
   </div>
 </section>
+
 
 <!-- ============ FINAL CTA ============ -->
 <section class="cta-band">
@@ -931,27 +934,55 @@
 </footer>
 
 <script>
+  // Sets the current year dynamically in the footer
   document.getElementById('year').textContent = new Date().getFullYear();
 
-  // Front-end only handlers — replace with a real lead-routing endpoint before launch.
+  // Handles the background form submission to Web3Forms
   function wireForm(formId, successId){
     var form = document.getElementById(formId);
     var success = document.getElementById(successId);
     if(!form) return;
+    
     form.addEventListener('submit', function(e){
-      e.preventDefault();
+      e.preventDefault(); // Keeps the page from reloading when submitted
+      
       if(!form.checkValidity()){
         form.reportValidity();
         return;
       }
-      // TODO: send form data to the real CRM / lead endpoint here.
-      success.classList.add('show');
-      form.reset();
+      
+      var data = new FormData(form);
+      
+      // Flags the incoming email subject line so Mark knows exactly which form was filled out
+      if(formId === 'valuation-form') {
+        data.append('subject', 'New Home Valuation Lead - Seller');
+      } else {
+        data.append('subject', 'New Home Search Lead - Buyer');
+      }
+
+      // Sends the data quietly to Web3Forms
+      fetch(form.action, {
+        method: form.method,
+        body: data,
+        headers: {
+            'Accept': 'application/json'
+        }
+      }).then(response => {
+        if (response.ok) {
+          success.classList.add('show'); // Smoothly displays Mark's custom "Thank you" block
+          form.reset();                  // Clears the inputs for a clean UI
+        } else {
+          alert("Oops! There was a problem submitting your form. Please try again.");
+        }
+      }).catch(error => {
+        alert("Oops! There was a problem connecting to the server.");
+      });
     });
   }
+  
+  // Activate the submission tracking for both form IDs
   wireForm('valuation-form', 'valuation-success');
   wireForm('search-form', 'search-success');
 </script>
-
 </body>
 </html>
